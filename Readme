@@ -1,0 +1,174 @@
+# Smart Notes Backend
+
+Backend API for the Smart Notes Workspace project built with Node.js, Express, MongoDB, and JWT Authentication.
+
+## Features
+
+- User Authentication (Register, Login, Get Current User)
+- JWT Authentication
+- Protected Routes
+- Notes CRUD Operations
+- Search Notes
+- Filter by Category and Status
+- Sorting
+- Pagination
+- Input Validation
+- Swagger Documentation
+
+---
+
+## Tech Stack
+
+- Node.js
+- Express.js
+- MongoDB
+- Mongoose
+- JWT
+- bcryptjs
+- Express Validator
+- CORS
+
+---
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone ITI-NotesProject-Node.JS
+```
+
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a `.env` file based on `.env.example`.
+
+Example:
+
+```env
+PORT=3000
+MONGO_URI=your_mongodb_connection_string
+JWT_SECRET=your_secret_key
+JWT_EXPIRES=7d
+```
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+Or run normally:
+
+```bash
+npm start
+```
+
+---
+
+## API Endpoints
+
+### Authentication
+
+| Method | Endpoint |
+|---------|----------|
+| POST | /auth/register |
+| POST | /auth/login |
+| GET | /auth/me |
+
+### Notes
+
+| Method | Endpoint |
+|---------|----------|
+| GET | /notes |
+| GET | /notes/:id |
+| POST | /notes |
+| PATCH | /notes/:id |
+| DELETE | /notes/:id |
+
+---
+
+## Query Parameters
+
+### Search
+
+```
+GET /notes?search=react
+```
+
+### Filter
+
+```
+GET /notes?category=Work
+```
+
+```
+GET /notes?status=Active
+```
+
+### Sort
+
+```
+GET /notes?sort=title
+```
+
+```
+GET /notes?sort=-createdAt
+```
+
+### Pagination
+
+```
+GET /notes?page=1&limit=5
+```
+
+---
+
+## Authentication
+
+Protected routes require a JWT token.
+
+Example:
+
+```
+Authorization: Bearer YOUR_TOKEN
+```
+
+---
+
+## Swagger Documentation
+
+After running the server:
+
+```
+http://localhost:3000/api-docs
+```
+
+---
+
+## Project Structure
+
+```
+src
+├── controllers
+├── middleware
+├── models
+├── routes
+├── utils
+├── validations
+```
+
+---
+
+## Environment Variables
+
+See `.env.example`.
+
+---
+
+## Postman Collection
+
+The Postman collection is included in the repository.

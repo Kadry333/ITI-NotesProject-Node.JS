@@ -1,0 +1,557 @@
+openapi: 3.0.3
+info:
+  title: Smart Notes Workspace - Backend API
+  version: 1.0.0
+  description: >-
+    API documentation for the Smart Notes Workspace backend (Express + MongoDB).
+servers:
+  - url: http://localhost:3000
+    description: Local server
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 64b7f2a1e4b0c9d8f0a12345
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        profileImage:
+          type: string
+          example: /images/default.png
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    UserRegisterRequest:
+      type: object
+      required: [name, email, password]
+      properties:
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        password:
+          type: string
+          example: strongpassword
+    UserLoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: john@example.com
+        password:
+          type: string
+          example: strongpassword
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: User logged in successfully
+        user:
+          $ref: "#/components/schemas/User"
+        token:
+          type: string
+          example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+    Note:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: 64b7f3a2e4b0c9d8f0a54321
+        title:
+          type: string
+          example: Grocery list
+        content:
+          type: string
+          example: Buy milk, eggs and bread
+        category:
+          type: string
+          example: General
+        tags:
+          type: array
+          items:
+            type: string
+          example: [shopping, personal]
+        status:
+          type: string
+          enum: [Active, Archived]
+          example: Active
+        isPinned:
+          type: boolean
+          example: false
+        user:
+          $ref: "#/components/schemas/User"
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+    NoteCreateRequest:
+      type: object
+      required: [title, content]
+      properties:
+        title:
+          type: string
+          example: Grocery list
+        content:
+          type: string
+          example: Buy milk, eggs and bread
+        category:
+          type: string
+          example: General
+        tags:
+          type: array
+          items:
+            type: string
+          example: [shopping]
+        status:
+          type: string
+          enum: [Active, Archived]
+          example: Active
+        isPinned:
+          type: boolean
+          example: false
+    NoteUpdateRequest:
+      type: object
+      properties:
+        title:
+          type: string
+        content:
+          type: string
+        category:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+        isPinned:
+          type: boolean
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: Error message
+paths:
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserRegisterRequest"
+      responses:
+        "201":
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: User created successfully
+                    user:
+                      _id: 64b7f2a1e4b0c9d8f0a12345
+                      name: John Doe
+                      email: john@example.com
+                      profileImage: /images/default.png
+                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "400":
+          description: Validation or existing email
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UserLoginRequest"
+      responses:
+        "200":
+          description: User logged in successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+              examples:
+                success:
+                  value:
+                    success: true
+                    message: User logged in successfully
+                    user:
+                      id: 64b7f2a1e4b0c9d8f0a12345
+                      name: John Doe
+                      email: john@example.com
+                      profileImage: /images/default.png
+                    token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        "401":
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current authenticated user
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Current user fetched
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: User fetched successfully
+                  user:
+                    $ref: "#/components/schemas/User"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /notes:
+    get:
+      tags: [Notes]
+      summary: Get list of notes for authenticated user
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Search in title or content (partial, case-insensitive)
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Filter by category
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [Active, Archived]
+          description: Filter by status
+        - in: query
+          name: sort
+          schema:
+            type: string
+          description: Sort string for mongoose (e.g., -createdAt)
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Page number for pagination
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 5
+          description: Items per page
+      responses:
+        "200":
+          description: Notes list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Notes fetched successfully
+                  results:
+                    type: integer
+                    example: 1
+                  page:
+                    type: integer
+                    example: 1
+                  totalPages:
+                    type: integer
+                    example: 1
+                  data:
+                    type: array
+                    items:
+                      $ref: "#/components/schemas/Note"
+              examples:
+                list:
+                  value:
+                    success: true
+                    message: Notes fetched successfully
+                    results: 1
+                    page: 1
+                    totalPages: 1
+                    data:
+                      - _id: 64b7f3a2e4b0c9d8f0a54321
+                        title: Grocery list
+                        content: Buy milk, eggs and bread
+                        category: General
+                        tags: [shopping]
+                        status: Active
+                        isPinned: false
+                        user:
+                          _id: 64b7f2a1e4b0c9d8f0a12345
+                          name: John Doe
+                          email: john@example.com
+                        createdAt: 2024-01-01T12:00:00.000Z
+                        updatedAt: 2024-01-01T12:00:00.000Z
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    post:
+      tags: [Notes]
+      summary: Create a new note
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteCreateRequest"
+      responses:
+        "201":
+          description: Note created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Note created successfully
+                  data:
+                    $ref: "#/components/schemas/Note"
+              examples:
+                created:
+                  value:
+                    status: success
+                    message: Note created successfully
+                    data:
+                      _id: 64b7f3a2e4b0c9d8f0a54321
+                      title: Grocery list
+                      content: Buy milk, eggs and bread
+                      category: General
+                      tags: [shopping]
+                      status: Active
+                      isPinned: false
+                      user:
+                        _id: 64b7f2a1e4b0c9d8f0a12345
+                        name: John Doe
+                        email: john@example.com
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+  /notes/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+        description: Note ID
+    get:
+      tags: [Notes]
+      summary: Get a single note by id
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Note fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Note fetched successfully
+                  data:
+                    $ref: "#/components/schemas/Note"
+              examples:
+                ok:
+                  value:
+                    status: success
+                    message: Note fetched successfully
+                    data:
+                      _id: 64b7f3a2e4b0c9d8f0a54321
+                      title: Grocery list
+                      content: Buy milk, eggs and bread
+                      category: General
+                      tags: [shopping]
+                      status: Active
+                      isPinned: false
+                      user:
+                        _id: 64b7f2a1e4b0c9d8f0a12345
+                        name: John Doe
+                        email: john@example.com
+        "404":
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    patch:
+      tags: [Notes]
+      summary: Update a note
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NoteUpdateRequest"
+      responses:
+        "200":
+          description: Note updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Note updated successfully
+                  data:
+                    $ref: "#/components/schemas/Note"
+              examples:
+                updated:
+                  value:
+                    status: success
+                    message: Note updated successfully
+                    data:
+                      _id: 64b7f3a2e4b0c9d8f0a54321
+                      title: Grocery list
+                      content: Buy almond milk instead
+                      category: General
+                      tags: [shopping]
+                      status: Active
+                      isPinned: false
+                      user:
+                        _id: 64b7f2a1e4b0c9d8f0a12345
+                        name: John Doe
+                        email: john@example.com
+        "400":
+          description: Validation error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "404":
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+    delete:
+      tags: [Notes]
+      summary: Delete a note
+      security:
+        - bearerAuth: []
+      responses:
+        "200":
+          description: Note deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: Note deleted successfully
+              examples:
+                deleted:
+                  value:
+                    status: success
+                    message: Note deleted successfully
+        "404":
+          description: Note not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+        "401":
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ErrorResponse"
+security: []
