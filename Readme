@@ -171,4 +171,18 @@ See `.env.example`.
 
 ## Postman Collection
 
-The Postman collection is included in the repository.
+Import the `Postman_Collection.json` file into Postman to test all API endpoints.
+
+Authentication flow:
+
+1. Register
+2. Login
+3. Copy the returned JWT token
+4. Add the token as a Bearer Token
+5. Test the protected Notes endpoints
+
+---
+
+## License
+
+This project was developed for educational purposes as part of the ITI Node.js Track.
